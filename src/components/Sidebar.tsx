@@ -1,0 +1,79 @@
+"use client";
+
+import {
+    LayoutDashboard,
+    CreditCard,
+    BarChart3,
+    PieChart,
+    Tags,
+    Settings,
+    HelpCircle
+} from 'lucide-react';
+import { clsx } from 'clsx';
+
+interface SidebarProps {
+    currentView: string;
+    onViewChange: (view: string) => void;
+}
+
+export function Sidebar({ currentView, onViewChange }: SidebarProps) {
+    const navItems = [
+        { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+        { id: 'transactions', label: 'Transacciones', icon: CreditCard },
+        { id: 'analytics', label: 'Análisis', icon: BarChart3 },
+        { id: 'budget', label: 'Presupuesto', icon: PieChart },
+        { id: 'categories', label: 'Categorías', icon: Tags },
+    ];
+
+    return (
+        <aside className="w-20 md:w-64 bg-zinc-900 border-r border-zinc-800 flex flex-col h-screen fixed left-0 top-0 z-50 transition-all duration-300">
+            <div className="p-6 flex items-center justify-center md:justify-start gap-3 border-b border-zinc-800/50">
+                <div className="w-8 h-8 rounded-full border-2 border-[#b4f827] flex items-center justify-center">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#b4f827" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+                    </svg>
+                </div>
+                <span className="hidden md:block font-bold text-xl text-white tracking-tight">FinanceFlow</span>
+            </div>
+
+            <nav className="flex-1 overflow-y-auto py-6 flex flex-col gap-2 px-3">
+                {navItems.map((item) => (
+                    <button
+                        key={item.id}
+                        onClick={() => onViewChange(item.id)}
+                        className={clsx(
+                            "w-full flex items-center gap-3 px-3 py-3 rounded-xl transition-all duration-200 group",
+                            currentView === item.id
+                                ? "bg-[#b4f827] text-black shadow-[0_0_20px_rgba(180,248,39,0.2)]"
+                                : "text-zinc-400 hover:bg-zinc-800 hover:text-white"
+                        )}
+                        title={item.label}
+                    >
+                        <item.icon size={22} className={clsx(
+                            currentView === item.id ? "text-black" : "group-hover:text-[#b4f827]"
+                        )} />
+                        <span className={clsx(
+                            "hidden md:block font-medium",
+                            currentView === item.id ? "font-semibold" : ""
+                        )}>{item.label}</span>
+                    </button>
+                ))}
+            </nav>
+
+            <div className="p-4 border-t border-zinc-800/50 flex flex-col gap-2">
+                <button
+                    onClick={() => onViewChange('settings')}
+                    className={clsx(
+                        "w-full flex items-center gap-3 px-3 py-3 rounded-xl transition-all duration-200 group",
+                        currentView === 'settings'
+                            ? "bg-zinc-800 text-white"
+                            : "text-zinc-400 hover:bg-zinc-800 hover:text-white"
+                    )}
+                >
+                    <Settings size={22} />
+                    <span className="hidden md:block font-medium">Configuración</span>
+                </button>
+            </div>
+        </aside>
+    );
+}
