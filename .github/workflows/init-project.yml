@@ -1,0 +1,17 @@
+name: Project Initializer
+on: [push]
+jobs:
+  setup-branches:
+    if: github.run_number == 1 # Solo corre la primera vez
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Create Develop Branch
+        run: |
+          git config --global user.name "THC Labs Bot"
+          git config --global user.email "thc@labs.bot"
+          git checkout -b develop
+          git push origin develop
