@@ -13,7 +13,8 @@ interface FinanceContextType {
     deleteTransaction: (id: string) => Promise<void>;
     updateSettings: (settings: Partial<FinanceData>) => Promise<void>;
     resetData: () => Promise<void>;
-    signIn: () => Promise<void>;
+    signIn: (email: string, password: string) => Promise<any>;
+    signUp: (email: string, password: string) => Promise<any>;
     signOut: () => Promise<void>;
 }
 
@@ -201,9 +202,12 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
         setData(initialFinanceData);
     };
 
-    const signIn = async () => {
-        // Redirige a login local o OAuth
-        await supabase.auth.signInWithOAuth({ provider: 'github' });
+    const signIn = async (email: string, password: string) => {
+        return await supabase.auth.signInWithPassword({ email, password });
+    };
+
+    const signUp = async (email: string, password: string) => {
+        return await supabase.auth.signUp({ email, password });
     };
 
     const signOut = async () => {
@@ -222,6 +226,7 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
             updateSettings,
             resetData,
             signIn,
+            signUp,
             signOut
         }}>
             {children}
