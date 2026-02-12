@@ -11,6 +11,7 @@ interface FinanceContextType {
     user: User | null;
     addTransaction: (transaction: Omit<Transaction, 'id'>) => Promise<void>;
     deleteTransaction: (id: string) => Promise<void>;
+    editTransaction: (id: string, updatedTx: Partial<Omit<Transaction, 'id'>>) => Promise<void>;
     updateSettings: (settings: Partial<FinanceData>) => Promise<void>;
     resetData: () => Promise<void>;
     signIn: (email: string, password: string) => Promise<any>;
@@ -114,7 +115,7 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
             .single();
 
         if (error) {
-            console.error("Error adding transaction:", error);
+            console.error("Error adding transaction:", error.message, error);
             return;
         }
 
@@ -164,6 +165,53 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
             ...prev,
             currentAccountBalance: newBalance,
             transactions: prev.transactions.filter(t => t.id !== id)
+        }));
+    };
+
+    const editTransaction = async (id: string, updatedTx: Partial<Omit<Transaction, 'id'>>) => {
+        if (!user) return;
+
+        const originalTx = data.transactions.find(t => t.id === id);
+        if (!originalTx) return;
+
+        // Calculate potential balance change
+        let balanceDiff = 0;
+
+        // If amount or type changed, we need to adjust balance
+        // Revert original transaction effect
+        const originalAmount = originalTx.type === 'income' ? originalTx.amount : -originalTx.amount;
+
+        // Apply new transaction effect (use new values or fallback to original)
+        const newType = updatedTx.type || originalTx.type;
+        const newAmountVal = updatedTx.amount !== undefined ? updatedTx.amount : originalTx.amount;
+        const newSignedAmount = newType === 'income' ? newAmountVal : -newAmountVal;
+
+        balanceDiff = newSignedAmount - originalAmount;
+        const newBalance = data.currentAccountBalance + balanceDiff;
+
+        const { error } = await supabase
+            .from('transactions')
+            .update(updatedTx)
+            .eq('id', id);
+
+        if (error) {
+            console.error("Error editing transaction:", error.message, error);
+            return;
+        }
+
+        if (balanceDiff !== 0) {
+            await supabase
+                .from('profiles')
+                .update({ current_balance: newBalance })
+                .eq('id', user.id);
+        }
+
+        setData(prev => ({
+            ...prev,
+            currentAccountBalance: newBalance,
+            transactions: prev.transactions.map(t =>
+                t.id === id ? { ...t, ...updatedTx } : t
+            )
         }));
     };
 
@@ -223,6 +271,7 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
             user,
             addTransaction,
             deleteTransaction,
+            editTransaction,
             updateSettings,
             resetData,
             signIn,
