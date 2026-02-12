@@ -19,7 +19,7 @@ import { TransactionModal } from './TransactionModal';
 import { TransactionType } from '../types/finance';
 
 export function DashboardView() {
-    const { data } = useFinanceData();
+    const { data, isLoading } = useFinanceData();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [modalType, setModalType] = useState<TransactionType>('expense');
 
@@ -59,7 +59,14 @@ export function DashboardView() {
             {/* Welcome Section */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
-                    <h2 className="text-3xl font-bold text-white">Buenos días, <span className="text-[#b4f827]">{data.userName}</span></h2>
+                    <h2 className="text-3xl font-bold text-white">
+                        Buenos días, {' '}
+                        {isLoading ? (
+                            <span className="inline-block h-8 w-32 bg-zinc-800 animate-pulse rounded-lg"></span>
+                        ) : (
+                            <span className="text-[#b4f827]">{data.userName}</span>
+                        )}
+                    </h2>
                     <p className="text-zinc-400 mt-1">Controla tus finanzas y alcanza tus objetivos</p>
                 </div>
                 <div className="relative w-full md:w-auto">
