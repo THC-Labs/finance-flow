@@ -16,11 +16,4 @@ export function BudgetView() {
     );
 }
 
-export function CategoriesView() {
-    return (
-        <div className="p-8 flex flex-col items-center justify-center h-full text-zinc-500">
-            <h2 className="text-2xl text-white font-bold mb-2">Categorías</h2>
-            <p>Próximamente: Personalización de categorías.</p>
-        </div>
-    );
-}
+

@@ -1,12 +1,13 @@
 "use client";
 
 import React, { useState } from "react";
-import { FinanceProvider, useFinanceData } from "@/hooks/useFinanceData";
-import { Sidebar } from "@/components/Sidebar";
-import { DashboardView } from "@/components/DashboardView";
-import { TransactionsView } from "@/components/TransactionsView";
-import { SettingsView } from "@/components/SettingsView";
-import { AnalyticsView, BudgetView, CategoriesView } from "@/components/PlaceholderViews";
+import { FinanceProvider, useFinanceData } from "../hooks/useFinanceData";
+import { Sidebar } from "../components/Sidebar";
+import { DashboardView } from "../components/DashboardView";
+import { TransactionsView } from "../components/TransactionsView";
+import { SettingsView } from "../components/SettingsView";
+import { AnalyticsView, BudgetView } from "../components/PlaceholderViews";
+import { CategoriesView } from "../components/CategoriesView";
 
 function AppContent() {
   const { user, isLoading, signIn, signUp } = useFinanceData();

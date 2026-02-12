@@ -1,42 +1,72 @@
-"use client";
-
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 import { useFinanceData } from '../hooks/useFinanceData';
-import { TransactionType } from '../types/finance';
+import { Transaction, TransactionType } from '../types/finance';
+import { CATEGORY_GROUPS } from '../utils/categories';
 
 interface TransactionModalProps {
     isOpen: boolean;
     onClose: () => void;
     type: TransactionType;
+    initialData?: Transaction | null;
 }
 
-export function TransactionModal({ isOpen, onClose, type }: TransactionModalProps) {
-    const { addTransaction } = useFinanceData();
+export function TransactionModal({ isOpen, onClose, type, initialData }: TransactionModalProps) {
+    const { addTransaction, editTransaction } = useFinanceData();
     const [amount, setAmount] = useState('');
     const [description, setDescription] = useState('');
     const [category, setCategory] = useState('');
     const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+
+    useEffect(() => {
+        if (initialData) {
+            setAmount(initialData.amount.toString());
+            setDescription(initialData.description);
+            setCategory(initialData.category);
+            setDate(initialData.date.split('T')[0]);
+        } else {
+            setAmount('');
+            setDescription('');
+            setCategory('');
+            setDate(new Date().toISOString().split('T')[0]);
+        }
+    }, [initialData, isOpen]);
 
     if (!isOpen) return null;
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
 
-        addTransaction({
+        const txData = {
             type,
             amount: parseFloat(amount),
             description,
             category,
             date: new Date(date).toISOString()
-        });
+        };
+
+        if (initialData) {
+            editTransaction(initialData.id, txData);
+        } else {
+            addTransaction(txData);
+        }
 
         onClose();
-        // Reset form
-        setAmount('');
-        setDescription('');
-        setCategory('');
+        // Reset form if not editing (though useEffect handles this on re-open)
+        if (!initialData) {
+            setAmount('');
+            setDescription('');
+            setCategory('');
+        }
     };
+
+    const isEditing = !!initialData;
+    const categoryGroup = CATEGORY_GROUPS.find(g => g.id === (type === 'income' ? 'income' : 'expense'))
+        || (type === 'expense' ? CATEGORY_GROUPS.find(g => g.id === 'savings') : null);
+
+    // Flatten logic for categories:
+    // If expense, show expense + savings groups
+    // If income, show income group
 
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
@@ -49,7 +79,7 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
                 </button>
 
                 <h3 className="text-xl font-bold text-white mb-6">
-                    {type === 'income' ? 'Nuevo Ingreso' : 'Nuevo Gasto'}
+                    {isEditing ? 'Editar Transacción' : (type === 'income' ? 'Nuevo Ingreso' : 'Nuevo Gasto')}
                 </h3>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
@@ -89,32 +119,28 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
                             <option value="">Seleccionar categoría</option>
                             {type === 'expense' ? (
                                 <>
-                                    <optgroup label="Gastos Fijos">
-                                        <option value="vivienda">🏠 Vivienda</option>
-                                        <option value="telecomunicaciones">📱 Telecomunicaciones</option>
-                                        <option value="seguros">🛡️ Seguros</option>
-                                        <option value="suscripciones">📺 Suscripciones</option>
-                                    </optgroup>
-                                    <optgroup label="Gastos Variables">
-                                        <option value="alimentacion">🛒 Alimentación</option>
-                                        <option value="transporte">🚗 Transporte</option>
-                                        <option value="suministros">💡 Suministros</option>
-                                        <option value="salud">🏥 Salud</option>
-                                    </optgroup>
-                                    <optgroup label="Gastos Discrecionales">
-                                        <option value="ocio">🍽️ Ocio/Restaurantes</option>
-                                        <option value="entretenimiento">🎬 Entretenimiento</option>
-                                        <option value="compras">🛍️ Compras personales</option>
-                                        <option value="viajes">✈️ Viajes</option>
-                                    </optgroup>
+                                    {CATEGORY_GROUPS.filter(g => g.id === 'expense' || g.id === 'savings').map(group => (
+                                        <optgroup key={group.id} label={group.title}>
+                                            {group.items.map(item => (
+                                                <option key={item.id} value={item.id}>
+                                                    {item.label}
+                                                </option>
+                                            ))}
+                                        </optgroup>
+                                    ))}
                                 </>
                             ) : (
-                                <optgroup label="Ingresos">
-                                    <option value="salario">💼 Salario</option>
-                                    <option value="freelance">💻 Freelance</option>
-                                    <option value="inversiones">📈 Inversiones</option>
-                                    <option value="otros_ingresos">💰 Otros ingresos</option>
-                                </optgroup>
+                                <>
+                                    {CATEGORY_GROUPS.filter(g => g.id === 'income').map(group => (
+                                        <optgroup key={group.id} label={group.title}>
+                                            {group.items.map(item => (
+                                                <option key={item.id} value={item.id}>
+                                                    {item.label}
+                                                </option>
+                                            ))}
+                                        </optgroup>
+                                    ))}
+                                </>
                             )}
                         </select>
                     </div>
@@ -142,7 +168,7 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
                             type="submit"
                             className="flex-1 px-4 py-3 rounded-xl bg-[#b4f827] text-black font-bold hover:bg-[#a3e622] transition-colors"
                         >
-                            Guardar
+                            {isEditing ? 'Actualizar' : 'Guardar'}
                         </button>
                     </div>
                 </form>
