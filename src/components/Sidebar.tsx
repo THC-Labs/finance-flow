@@ -7,9 +7,11 @@ import {
     PieChart,
     Tags,
     Settings,
-    HelpCircle
+    HelpCircle,
+    LogOut
 } from 'lucide-react';
 import { clsx } from 'clsx';
+import { useFinanceData } from '../hooks/useFinanceData';
 
 interface SidebarProps {
     currentView: string;
@@ -17,6 +19,7 @@ interface SidebarProps {
 }
 
 export function Sidebar({ currentView, onViewChange }: SidebarProps) {
+    const { signOut } = useFinanceData();
     const navItems = [
         { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
         { id: 'transactions', label: 'Transacciones', icon: CreditCard },
@@ -72,6 +75,14 @@ export function Sidebar({ currentView, onViewChange }: SidebarProps) {
                 >
                     <Settings size={22} />
                     <span className="hidden md:block font-medium">Configuración</span>
+                </button>
+
+                <button
+                    onClick={() => signOut()}
+                    className="w-full flex items-center gap-3 px-3 py-3 rounded-xl transition-all duration-200 text-red-400 hover:bg-red-500/10"
+                >
+                    <LogOut size={22} />
+                    <span className="hidden md:block font-medium">Cerrar Sesión</span>
                 </button>
             </div>
         </aside>

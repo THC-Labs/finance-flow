@@ -24,7 +24,6 @@ export function TransactionModal({ isOpen, onClose, type }: TransactionModalProp
         e.preventDefault();
 
         addTransaction({
-            id: Date.now().toString(36) + Math.random().toString(36).substr(2),
             type,
             amount: parseFloat(amount),
             description,
