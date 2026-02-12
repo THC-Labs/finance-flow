@@ -132,7 +132,7 @@ export function SettingsView() {
                     <AlertTriangle className="text-[#b4f827]" /> Acerca de
                 </h3>
                 <p className="text-zinc-400 text-sm">FinanceFlow v0.1.0</p>
-                <p className="text-zinc-500 text-sm mt-1">Los datos se guardan localmente en tu navegador (LocalStorage). Si borras la caché o cambias de navegador, perderás los datos a menos que los exportes.</p>
+                <p className="text-zinc-500 text-sm mt-1">Tus datos están sincronizados de forma segura con Supabase. Puedes acceder a ellos desde cualquier dispositivo iniciando sesión.</p>
             </div>
         </div>
     );

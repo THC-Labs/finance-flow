@@ -13,6 +13,7 @@
     "init:local": "cp .env.example .env.local && npm install && npx supabase start"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.95.3",
     "chart.js": "^4.5.1",
     "clsx": "^2.1.1",
     "lucide-react": "^0.563.0",
