@@ -20,6 +20,17 @@ interface FinanceContextType {
 
 const FinanceContext = createContext<FinanceContextType | undefined>(undefined);
 
+// Helper hook to use the finance context
+export const useFinanceData = () => {
+    const context = useContext(FinanceContext);
+    if (context === undefined) {
+        throw new Error('useFinanceData must be used within a FinanceProvider');
+    }
+    return context;
+};
+
+
+
 export function FinanceProvider({ children }: { children: React.ReactNode }) {
     const [data, setData] = useState<FinanceData>(initialFinanceData);
     const [user, setUser] = useState<User | null>(null);
@@ -234,10 +245,3 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
     );
 };
 
-export const useFinanceData = () => {
-    const context = useContext(FinanceContext);
-    if (context === undefined) {
-        throw new Error('useFinanceData must be used within a FinanceProvider');
-    }
-    return context;
-};
