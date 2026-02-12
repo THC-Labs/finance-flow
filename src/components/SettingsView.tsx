@@ -1,13 +1,19 @@
 "use client";
 
+import React, { useState, useEffect } from 'react';
 import { useFinanceData } from '../hooks/useFinanceData';
-import { useState } from 'react';
 import { Save, Download, Upload, Trash2, AlertTriangle } from 'lucide-react';
 
 export function SettingsView() {
     const { data, updateSettings, resetData } = useFinanceData();
     const [userName, setUserName] = useState(data.userName);
     const [monthlyGoal, setMonthlyGoal] = useState(data.monthlyGoal.toString());
+
+    // Sync input state if data loads after mount or is updated elsewhere
+    useEffect(() => {
+        setUserName(data.userName);
+        setMonthlyGoal(data.monthlyGoal.toString());
+    }, [data.userName, data.monthlyGoal]);
 
     const handleSave = () => {
         updateSettings({

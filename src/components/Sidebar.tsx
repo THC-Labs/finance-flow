@@ -1,5 +1,6 @@
 "use client";
 
+import React from 'react';
 import {
     LayoutDashboard,
     CreditCard,
@@ -7,7 +8,6 @@ import {
     PieChart,
     Tags,
     Settings,
-    HelpCircle,
     LogOut
 } from 'lucide-react';
 import { clsx } from 'clsx';
@@ -19,7 +19,7 @@ interface SidebarProps {
 }
 
 export function Sidebar({ currentView, onViewChange }: SidebarProps) {
-    const { signOut } = useFinanceData();
+    const { data, signOut } = useFinanceData();
     const navItems = [
         { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
         { id: 'transactions', label: 'Transacciones', icon: CreditCard },
@@ -64,6 +64,16 @@ export function Sidebar({ currentView, onViewChange }: SidebarProps) {
             </nav>
 
             <div className="p-4 border-t border-zinc-800/50 flex flex-col gap-2">
+                <div className="flex items-center gap-3 px-3 py-3 mb-2 rounded-2xl bg-zinc-950/50 border border-zinc-800/50">
+                    <div className="w-8 h-8 rounded-full bg-[#b4f827] flex items-center justify-center text-black font-bold text-xs">
+                        {data.userName.charAt(0).toUpperCase()}
+                    </div>
+                    <div className="hidden md:block overflow-hidden">
+                        <p className="text-white text-xs font-bold truncate leading-none mb-1">{data.userName}</p>
+                        <p className="text-zinc-500 text-[10px] truncate leading-none">Miembro Premium</p>
+                    </div>
+                </div>
+
                 <button
                     onClick={() => onViewChange('settings')}
                     className={clsx(
