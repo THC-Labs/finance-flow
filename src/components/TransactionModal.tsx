@@ -12,10 +12,11 @@ interface TransactionModalProps {
 }
 
 export function TransactionModal({ isOpen, onClose, type, initialData }: TransactionModalProps) {
-    const { addTransaction, editTransaction } = useFinanceData();
+    const { data, addTransaction, editTransaction } = useFinanceData();
     const [amount, setAmount] = useState('');
     const [description, setDescription] = useState('');
     const [category, setCategory] = useState('');
+    const [selectedCard, setSelectedCard] = useState('');
     const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
 
     useEffect(() => {
@@ -24,13 +25,15 @@ export function TransactionModal({ isOpen, onClose, type, initialData }: Transac
             setDescription(initialData.description);
             setCategory(initialData.category);
             setDate(initialData.date.split('T')[0]);
+            setSelectedCard(initialData.card_id || (data.cards.length > 0 ? data.cards[0].id : ''));
         } else {
             setAmount('');
             setDescription('');
             setCategory('');
             setDate(new Date().toISOString().split('T')[0]);
+            setSelectedCard(data.cards.length > 0 ? data.cards[0].id : '');
         }
-    }, [initialData, isOpen]);
+    }, [initialData, isOpen, data.cards]);
 
     if (!isOpen) return null;
 
@@ -46,9 +49,9 @@ export function TransactionModal({ isOpen, onClose, type, initialData }: Transac
         };
 
         if (initialData) {
-            editTransaction(initialData.id, txData);
+            editTransaction(initialData.id, { ...txData, card_id: selectedCard } as any);
         } else {
-            addTransaction(txData);
+            addTransaction(txData as any, selectedCard);
         }
 
         onClose();
@@ -94,6 +97,22 @@ export function TransactionModal({ isOpen, onClose, type, initialData }: Transac
                             className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#9AD93D] focus:ring-1 focus:ring-[#9AD93D] transition-all"
                             placeholder="0.00"
                         />
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-zinc-400 mb-2">Cuenta / Tarjeta</label>
+                        <select
+                            required
+                            value={selectedCard}
+                            onChange={(e) => setSelectedCard(e.target.value)}
+                            className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#9AD93D] focus:ring-1 focus:ring-[#9AD93D] transition-all appearance-none"
+                        >
+                            {data.cards.map(card => (
+                                <option key={card.id} value={card.id}>
+                                    {card.name} ({card.type}) - {card.last4}
+                                </option>
+                            ))}
+                        </select>
                     </div>
 
                     <div>

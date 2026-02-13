@@ -29,7 +29,7 @@ export function Sidebar({ currentView, onViewChange }: SidebarProps) {
     ];
 
     return (
-        <aside className="w-20 md:w-64 bg-black/20 backdrop-blur-xl border-r border-white/5 flex flex-col h-screen fixed left-0 top-0 z-50 transition-all duration-300">
+        <aside className="w-20 md:w-64 bg-[#4BA66A]/20 backdrop-blur-xl border-r border-white/5 flex flex-col h-screen fixed left-0 top-0 z-50 transition-all duration-300">
             <div className="p-6 flex items-center justify-center md:justify-start gap-3 border-b border-white/5">
                 <div className="w-8 h-8 rounded-full border-2 border-primary flex items-center justify-center">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="text-primary" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">

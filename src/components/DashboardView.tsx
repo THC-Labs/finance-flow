@@ -3,7 +3,7 @@
 import { useFinanceData } from '../hooks/useFinanceData';
 import { formatCurrency, formatDate } from '../utils/format';
 import { SplineChart } from './SplineChart';
-import { VirtualCard } from './VirtualCard';
+import { CardsCarousel } from './CardsCarousel';
 import {
     ArrowUpRight,
     ArrowDownRight,
@@ -74,19 +74,15 @@ export function DashboardView() {
 
                     {/* Top Section: Card + Quick Actions */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <VirtualCard
-                            balance={data.currentAccountBalance}
-                            holderName={data.userName}
-                            loading={isLoading}
-                        />
+                        <CardsCarousel />
 
                         {/* Quick Actions moved here */}
-                        <div className="bg-zinc-900/70 backdrop-blur-md rounded-[30px] p-6 border border-zinc-800 flex flex-col justify-center">
+                        <div className="bg-zinc-900/50 backdrop-blur-xl rounded-[32px] p-6 border border-white/5 shadow-2xl flex flex-col justify-center">
                             <h3 className="text-white font-semibold text-lg mb-4">Acciones Rápidas</h3>
                             <div className="grid grid-cols-2 gap-3 h-full">
                                 <button
                                     onClick={() => openModal('income')}
-                                    className="bg-zinc-950/50 hover:bg-zinc-800 border border-zinc-800 p-4 rounded-2xl flex flex-col items-center justify-center gap-2 group transition-all"
+                                    className="bg-white/5 hover:bg-white/10 border border-white/5 p-4 rounded-2xl flex flex-col items-center justify-center gap-2 group transition-all duration-300"
                                 >
                                     <div className="w-10 h-10 rounded-full bg-[#9AD93D]/10 flex items-center justify-center group-hover:scale-110 transition-transform">
                                         <ArrowUpRight className="text-[#9AD93D]" size={20} />
@@ -95,7 +91,7 @@ export function DashboardView() {
                                 </button>
                                 <button
                                     onClick={() => openModal('expense')}
-                                    className="bg-zinc-950/50 hover:bg-zinc-800 border border-zinc-800 p-4 rounded-2xl flex flex-col items-center justify-center gap-2 group transition-all"
+                                    className="bg-white/5 hover:bg-white/10 border border-white/5 p-4 rounded-2xl flex flex-col items-center justify-center gap-2 group transition-all duration-300"
                                 >
                                     <div className="w-10 h-10 rounded-full bg-red-500/10 flex items-center justify-center group-hover:scale-110 transition-transform">
                                         <ArrowDownRight className="text-red-400" size={20} />
@@ -133,7 +129,7 @@ export function DashboardView() {
                         />
 
                         {/* Monthly Goal moved here */}
-                        <div className="bg-zinc-900/70 backdrop-blur-md rounded-2xl p-5 border border-zinc-800 hover:border-zinc-700 transition-colors flex flex-col justify-between">
+                        <div className="bg-zinc-900/50 backdrop-blur-xl rounded-[24px] p-5 border border-white/5 hover:scale-[1.02] transition-all duration-300 shadow-lg flex flex-col justify-between">
                             <div className="flex justify-between items-center mb-2">
                                 <div className="flex items-center gap-3">
                                     <div className="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center">
@@ -160,7 +156,7 @@ export function DashboardView() {
                 <div className="space-y-6">
 
                     {/* Recent Transactions */}
-                    <div className="bg-zinc-900/70 backdrop-blur-md rounded-[30px] p-6 border border-zinc-800 h-full">
+                    <div className="bg-zinc-900/50 backdrop-blur-xl rounded-[32px] p-6 border border-white/5 shadow-2xl h-full">
                         <div className="flex justify-between items-center mb-6">
                             <h3 className="text-white font-semibold text-lg">Recientes</h3>
                             <button className="text-[#9AD93D] text-sm hover:underline">Ver todas</button>
@@ -168,7 +164,7 @@ export function DashboardView() {
 
                         <div className="space-y-4">
                             {data.transactions.slice(-8).map((t) => ( // Showing more transactions since we have height
-                                <div key={t.id} className="flex items-center justify-between group p-3 hover:bg-zinc-950/50 rounded-xl transition-colors">
+                                <div key={t.id} className="flex items-center justify-between group p-3 hover:bg-white/5 rounded-2xl transition-all duration-300">
                                     <div className="flex items-center gap-3">
                                         <div className="w-10 h-10 rounded-full bg-zinc-800 flex items-center justify-center text-lg">
                                             {getCategoryIcon(t.category)}
@@ -209,7 +205,7 @@ export function DashboardView() {
 
 function SummaryCard({ title, amount, icon: Icon, color, bgColor }: any) {
     return (
-        <div className="bg-zinc-900/70 backdrop-blur-md rounded-2xl p-5 border border-zinc-800 hover:border-zinc-700 transition-colors">
+        <div className="bg-zinc-900/50 backdrop-blur-xl rounded-[24px] p-5 border border-white/5 hover:scale-[1.02] transition-all duration-300 shadow-lg">
             <div className={clsx("w-10 h-10 rounded-xl flex items-center justify-center mb-4", bgColor, color)}>
                 <Icon size={20} />
             </div>
