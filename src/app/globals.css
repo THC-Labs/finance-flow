@@ -1,8 +1,14 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Stronger Green for visibility */
+  --background: radial-gradient(circle at 50% 0%, #1a4f2e 0%, #09090b 80%);
+  --foreground: #ededed;
+
+  --corporate-bg: #1A2326;
+  --corporate-neon: #9AD93D;
+  --corporate-pale: #B3F2CF;
+  --corporate-green: #4BA66A;
 }
 
 @theme inline {
@@ -10,18 +16,41 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-  --color-primary: #b4f827;
+
+  --color-primary: var(--corporate-neon);
+  --color-secondary: var(--corporate-pale);
+  --color-tertiary: var(--corporate-green);
+  --color-corporate-dark: var(--corporate-bg);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
+    --background-start: #1e3a23;
+    --background-end: #09090b;
+    --background: radial-gradient(circle at 50% -20%, var(--background-start) 0%, var(--background-end) 100%);
     --foreground: #ededed;
   }
 }
 
 body {
+  background: #09090b;
+  /* Fallback */
   background: var(--background);
+  background-attachment: fixed;
+  /* Access to fixed background */
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+  min-height: 100vh;
+}
+
+/* Utilities */
+.no-spinner::-webkit-outer-spin-button,
+.no-spinner::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.no-spinner {
+  -moz-appearance: textfield;
+  appearance: textfield;
 }

@@ -91,7 +91,7 @@ export function TransactionModal({ isOpen, onClose, type, initialData }: Transac
                             required
                             value={amount}
                             onChange={(e) => setAmount(e.target.value)}
-                            className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#b4f827] focus:ring-1 focus:ring-[#b4f827] transition-all"
+                            className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#9AD93D] focus:ring-1 focus:ring-[#9AD93D] transition-all"
                             placeholder="0.00"
                         />
                     </div>
@@ -103,7 +103,7 @@ export function TransactionModal({ isOpen, onClose, type, initialData }: Transac
                             required
                             value={description}
                             onChange={(e) => setDescription(e.target.value)}
-                            className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#b4f827] focus:ring-1 focus:ring-[#b4f827] transition-all"
+                            className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#9AD93D] focus:ring-1 focus:ring-[#9AD93D] transition-all"
                             placeholder="Ej: Compra supermercado"
                         />
                     </div>
@@ -114,7 +114,7 @@ export function TransactionModal({ isOpen, onClose, type, initialData }: Transac
                             required
                             value={category}
                             onChange={(e) => setCategory(e.target.value)}
-                            className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#b4f827] focus:ring-1 focus:ring-[#b4f827] transition-all appearance-none"
+                            className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#9AD93D] focus:ring-1 focus:ring-[#9AD93D] transition-all appearance-none"
                         >
                             <option value="">Seleccionar categoría</option>
                             {type === 'expense' ? (
@@ -152,7 +152,7 @@ export function TransactionModal({ isOpen, onClose, type, initialData }: Transac
                             required
                             value={date}
                             onChange={(e) => setDate(e.target.value)}
-                            className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#b4f827] focus:ring-1 focus:ring-[#b4f827] transition-all"
+                            className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#9AD93D] focus:ring-1 focus:ring-[#9AD93D] transition-all"
                         />
                     </div>
 
@@ -166,7 +166,7 @@ export function TransactionModal({ isOpen, onClose, type, initialData }: Transac
                         </button>
                         <button
                             type="submit"
-                            className="flex-1 px-4 py-3 rounded-xl bg-[#b4f827] text-black font-bold hover:bg-[#a3e622] transition-colors"
+                            className="flex-1 px-4 py-3 rounded-xl bg-[#9AD93D] text-black font-bold hover:bg-[#88c430] transition-colors"
                         >
                             {isEditing ? 'Actualizar' : 'Guardar'}
                         </button>
