@@ -73,33 +73,37 @@ export function DashboardView() {
                 <div className="lg:col-span-2 space-y-6">
 
                     {/* Top Section: Card + Quick Actions */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="flex flex-col gap-6">
                         <CardsCarousel />
+                    </div>
 
-                        {/* Quick Actions moved here */}
-                        <div className="bg-zinc-900/50 backdrop-blur-xl rounded-[32px] p-6 border border-white/5 shadow-2xl flex flex-col justify-center">
-                            <h3 className="text-white font-semibold text-lg mb-4">Acciones Rápidas</h3>
-                            <div className="grid grid-cols-2 gap-3 h-full">
-                                <button
-                                    onClick={() => openModal('income')}
-                                    className="bg-white/5 hover:bg-white/10 border border-white/5 p-4 rounded-2xl flex flex-col items-center justify-center gap-2 group transition-all duration-300"
-                                >
-                                    <div className="w-10 h-10 rounded-full bg-[#9AD93D]/10 flex items-center justify-center group-hover:scale-110 transition-transform">
-                                        <ArrowUpRight className="text-[#9AD93D]" size={20} />
-                                    </div>
-                                    <span className="text-zinc-300 font-medium text-sm">Ingreso</span>
-                                </button>
-                                <button
-                                    onClick={() => openModal('expense')}
-                                    className="bg-white/5 hover:bg-white/10 border border-white/5 p-4 rounded-2xl flex flex-col items-center justify-center gap-2 group transition-all duration-300"
-                                >
-                                    <div className="w-10 h-10 rounded-full bg-red-500/10 flex items-center justify-center group-hover:scale-110 transition-transform">
-                                        <ArrowDownRight className="text-red-400" size={20} />
-                                    </div>
-                                    <span className="text-zinc-300 font-medium text-sm">Gasto</span>
-                                </button>
+                    {/* Quick Actions - Moved below top section */}
+                    <div className="grid grid-cols-2 gap-6">
+                        <button
+                            onClick={() => openModal('income')}
+                            className="bg-zinc-900/50 backdrop-blur-xl border border-white/5 p-6 rounded-[24px] flex items-center justify-between group transition-all duration-300 hover:scale-[1.02] shadow-lg"
+                        >
+                            <div className="flex items-center gap-4">
+                                <div className="w-12 h-12 rounded-full bg-[#9AD93D]/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                    <ArrowUpRight className="text-[#9AD93D]" size={24} />
+                                </div>
+                                <span className="text-white font-bold text-lg">Ingreso</span>
                             </div>
-                        </div>
+                            <Plus className="text-zinc-500 group-hover:text-white transition-colors" size={20} />
+                        </button>
+
+                        <button
+                            onClick={() => openModal('expense')}
+                            className="bg-zinc-900/50 backdrop-blur-xl border border-white/5 p-6 rounded-[24px] flex items-center justify-between group transition-all duration-300 hover:scale-[1.02] shadow-lg"
+                        >
+                            <div className="flex items-center gap-4">
+                                <div className="w-12 h-12 rounded-full bg-red-500/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                    <ArrowDownRight className="text-red-400" size={24} />
+                                </div>
+                                <span className="text-white font-bold text-lg">Gasto</span>
+                            </div>
+                            <Minus className="text-zinc-500 group-hover:text-white transition-colors" size={20} />
+                        </button>
                     </div>
 
 

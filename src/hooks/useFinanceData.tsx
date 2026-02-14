@@ -12,7 +12,9 @@ interface FinanceContextType {
     addTransaction: (transaction: Omit<Transaction, 'id'>, cardId?: string) => Promise<void>;
     deleteTransaction: (id: string) => Promise<void>;
     editTransaction: (id: string, updatedTx: Partial<Omit<Transaction, 'id'>>) => Promise<void>;
-    addCard: (card: Omit<Card, 'id' | 'user_id'>) => Promise<void>; // New
+    addCard: (card: Omit<Card, 'id' | 'user_id'>) => Promise<void>;
+    deleteCard: (id: string) => Promise<void>;
+    updateCard: (id: string, updates: Partial<Omit<Card, 'id' | 'user_id'>>) => Promise<void>;
     updateSettings: (settings: Partial<FinanceData>) => Promise<void>;
     resetData: () => Promise<void>;
     signIn: (email: string, password: string) => Promise<any>;
@@ -215,6 +217,58 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
         });
     };
 
+    const deleteCard = async (id: string) => {
+        if (!user) return;
+
+        const { error } = await supabase
+            .from('cards')
+            .delete()
+            .eq('id', id);
+
+        if (error) {
+            console.error("Error deleting card:", error);
+            alert(`Error al eliminar la tarjeta: ${error.message}`);
+            return;
+        }
+
+        setData(prev => {
+            const updatedCards = prev.cards.filter(c => c.id !== id);
+            const totalBalance = updatedCards.reduce((sum, c) => sum + Number(c.balance), 0);
+            return {
+                ...prev,
+                cards: updatedCards,
+                currentAccountBalance: totalBalance
+            };
+        });
+    };
+
+    const updateCard = async (id: string, updates: Partial<Omit<Card, 'id' | 'user_id'>>) => {
+        if (!user) return;
+
+        const { error } = await supabase
+            .from('cards')
+            .update(updates)
+            .eq('id', id);
+
+        if (error) {
+            console.error("Error updating card:", error);
+            alert(`Error al actualizar la tarjeta: ${error.message}`);
+            return;
+        }
+
+        setData(prev => {
+            const updatedCards = prev.cards.map(c =>
+                c.id === id ? { ...c, ...updates } : c
+            );
+            const totalBalance = updatedCards.reduce((sum, c) => sum + Number(c.balance), 0);
+            return {
+                ...prev,
+                cards: updatedCards,
+                currentAccountBalance: totalBalance
+            };
+        });
+    };
+
     const deleteTransaction = async (id: string) => {
         if (!user) return;
 
@@ -385,6 +439,8 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
             deleteTransaction,
             editTransaction,
             addCard,
+            deleteCard,
+            updateCard,
             updateSettings,
             resetData,
             signIn,

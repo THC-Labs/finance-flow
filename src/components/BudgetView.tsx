@@ -137,7 +137,8 @@ export function BudgetView() {
                             {group.items.map(item => {
                                 const budget = localBudgets[item.id] || 0;
                                 const spent = getCurrentSpending(item.id);
-                                const percentage = budget > 0 ? Math.min((spent / budget) * 100, 100) : 0;
+                                const rawPercentage = budget > 0 ? (spent / budget) * 100 : 0;
+                                const barPercentage = Math.min(rawPercentage, 100);
                                 const isOverBudget = spent > budget;
 
                                 return (
@@ -165,7 +166,7 @@ export function BudgetView() {
                                             <div className="flex justify-between text-xs text-zinc-400">
                                                 <span>Gastado: {formatCurrency(spent)}</span>
                                                 <span className={isOverBudget ? "text-red-400 font-bold" : ""}>
-                                                    {Math.round(percentage)}%
+                                                    {Math.round(rawPercentage)}%
                                                 </span>
                                             </div>
                                             <div className="h-2 w-full bg-zinc-900/70 backdrop-blur-md rounded-full overflow-hidden">
@@ -173,7 +174,7 @@ export function BudgetView() {
                                                     className={clsx("h-full rounded-full transition-all duration-500",
                                                         isOverBudget ? "bg-red-500" : "bg-[#9AD93D]"
                                                     )}
-                                                    style={{ width: `${percentage}%` }}
+                                                    style={{ width: `${barPercentage}%` }}
                                                 />
                                             </div>
                                         </div>

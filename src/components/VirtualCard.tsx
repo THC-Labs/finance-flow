@@ -1,96 +1,89 @@
-import React from 'react';
-import { Loader2 } from 'lucide-react';
-import { formatCurrency } from '../utils/format';
-import { clsx } from 'clsx';
+import { clsx } from "clsx";
 
 interface VirtualCardProps {
     balance: number;
-    currency?: string;
-    loading?: boolean;
-    cardNumber?: string;
-    expiryDate?: string;
-    holderName?: string;
-    cardName?: string;
-    type?: string;
-    color?: string;
-    isStacked?: boolean; // New prop to control visibility of details when stacked
+    holderName: string;
+    cardName: string;
+    type: string;
+    color: string;
+    cardNumber: string;
+    isStacked?: boolean;
+    lastTransactionInfo?: string; // New prop for last transaction
 }
 
 export function VirtualCard({
     balance,
-    currency = 'EUR',
-    loading = false,
-    cardNumber = '**** **** **** 4589',
-    expiryDate = '09/28',
-    holderName = 'Usuario',
-    cardName = 'Main Account',
-    type = 'debit',
-    color = 'from-[#1A2326]',
-    isStacked = false
+    holderName,
+    cardName,
+    type,
+    color,
+    cardNumber,
+    isStacked = false,
+    lastTransactionInfo
 }: VirtualCardProps) {
 
-    const isTailwindClass = color.startsWith('bg-') || color.startsWith('from-');
+    // Format balance
+    const formattedBalance = new Intl.NumberFormat('es-ES', {
+        style: 'currency',
+        currency: 'EUR',
+        minimumFractionDigits: 2
+    }).format(balance);
 
     return (
-        <div className={clsx(
-            "relative overflow-hidden rounded-[24px] p-6 h-full w-full transition-all duration-300 shadow-xl border border-white/10",
-            isStacked ? "opacity-100" : ""
-        )}
+        <div
+            className={clsx(
+                "relative w-full h-full rounded-[32px] overflow-hidden transition-all duration-300 select-none shadow-2xl",
+                isStacked ? "shadow-md" : "shadow-2xl"
+            )}
             style={{
-                background: isTailwindClass ? undefined : `linear-gradient(135deg, ${color}, #000000)`
+                backgroundColor: color,
+                opacity: 1 // Force opaque
             }}
         >
-            {/* Background Gradient fallback or override */}
-            <div className={clsx(
-                "absolute inset-0 z-0 bg-gradient-to-br to-black/80",
-                isTailwindClass ? color : ""
-            )}></div>
+            {/* Background Texture/Noise - Adjusted opacity */}
+            <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')]"></div>
 
-            {/* Noise Texture - Subtle */}
-            <div className="absolute inset-0 opacity-10 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] z-0 mix-blend-overlay"></div>
+            {/* Glossy Overlay - Reduced intensity to keep color true */}
+            <div className="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-black/20"></div>
 
             {/* Content Container */}
-            <div className="relative z-10 flex flex-col justify-between h-full text-white">
+            <div className="relative h-full flex flex-col justify-between p-8 text-white z-10">
 
-                {/* Top: Card Name & Logo */}
+                {/* Header: Name + Logo */}
                 <div className="flex justify-between items-start">
                     <div>
-                        <p className="text-white/60 text-xs font-medium tracking-wide uppercase mb-1">{cardName}</p>
-                        {loading ? (
-                            <Loader2 className="w-6 h-6 animate-spin text-white" />
-                        ) : (
-                            <h3 className="text-3xl font-bold tracking-tight text-white">
-                                {formatCurrency(balance)}
-                            </h3>
-                        )}
+                        <div className="text-xs font-semibold tracking-wider opacity-70 uppercase mb-1">{cardName}</div>
+                        <div className="text-4xl font-bold tracking-tight">{formattedBalance}</div>
                     </div>
-                    {/* Mastercard/Visa minimal circle logo */}
-                    <div className="flex -space-x-2 opacity-80">
-                        <div className="w-6 h-6 rounded-full bg-white/20 backdrop-blur-sm"></div>
-                        <div className="w-6 h-6 rounded-full bg-white/40 backdrop-blur-sm"></div>
+                    {/* Mastercard Logo Circles */}
+                    <div className="flex -space-x-3 opacity-80">
+                        <div className="w-8 h-8 rounded-full bg-white/20 backdrop-blur-sm"></div>
+                        <div className="w-8 h-8 rounded-full bg-white/20 backdrop-blur-sm"></div>
                     </div>
                 </div>
 
-                {/* Bottom: Details (Hidden if stacked to clear visual noise, or keep minimal) */}
-                {!isStacked && (
-                    <div className="space-y-4">
-                        {/* Card Number */}
-                        <div className="font-mono text-lg tracking-widest text-white/90">
-                            •••• {cardNumber.slice(-4)}
-                        </div>
+                {/* Footer: Details */}
+                <div className="mt-auto">
+                    {/* Middle Section: Card Number OR Last Transaction */}
+                    <div className="mb-6 font-mono text-lg tracking-widest opacity-90 truncate">
+                        {lastTransactionInfo ? (
+                            <div className="flex items-center gap-2 text-base font-sans font-medium">
+                                <span className="opacity-70">Último:</span>
+                                <span>{lastTransactionInfo}</span>
+                            </div>
+                        ) : (
+                            cardNumber
+                        )}
+                    </div>
 
-                        {/* Footer Info */}
-                        <div className="flex justify-between items-end text-xs text-white/60 font-medium">
-                            <div className="uppercase tracking-wider italic">
-                                FinanceFlow
-                            </div>
-                            <div className="flex flex-col items-end">
-                                <span className="text-[9px] uppercase tracking-widest opacity-60">Exp</span>
-                                <span>{expiryDate}</span>
-                            </div>
+                    <div className="flex justify-between items-end">
+                        <div className="font-bold italic opacity-60 tracking-wider">FINANCEFLOW</div>
+                        <div className="text-xs opacity-60 text-right">
+                            <div className="text-[10px] font-bold">EXP</div>
+                            09/28
                         </div>
                     </div>
-                )}
+                </div>
             </div>
         </div>
     );

@@ -33,11 +33,15 @@
 }
 
 body {
-  background: #09090b;
-  /* Fallback */
-  background: var(--background);
+  background-color: #09090b;
+  /* SVG Pattern: FinanceFlow Logo & Text (Low Opacity) */
+  background-image:
+    radial-gradient(circle at 50% 0%, #1a4f2ecc 0%, #09090b 80%),
+    /* Existing gradient (slightly adjusted) */
+    url("data:image/svg+xml,%3Csvg width='200' height='200' viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M40 70 L60 70 L60 90 L40 90 Z M70 70 L160 70 L160 80 L70 80 Z M70 85 L140 85 L140 95 L70 95 Z' /%3E%3Ctext x='40' y='130' font-family='Arial, sans-serif' font-weight='bold' font-size='18' letter-spacing='1'%3EFINANCEFLOW%3C/text%3E%3C/g%3E%3C/svg%3E");
   background-attachment: fixed;
-  /* Access to fixed background */
+  background-size: cover, 400px 400px;
+  /* Gradient covers, Pattern repeats */
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
   min-height: 100vh;
@@ -63,4 +67,37 @@ body {
 .scrollbar-hide {
   -ms-overflow-style: none;
   scrollbar-width: none;
+}
+
+/* Card Transitions */
+@keyframes card-vanish-in {
+  0% {
+    opacity: 0;
+    transform: perspective(1000px) scale(0.8) translateY(30px) rotateX(-10deg);
+  }
+
+  100% {
+    opacity: 1;
+    transform: perspective(1000px) scale(1) translateY(0) rotateX(0);
+  }
+}
+
+@keyframes card-vanish-out {
+  0% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(1.1) translateY(-30px);
+  }
+}
+
+.animate-card-in {
+  animation: card-vanish-in 0.6s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+}
+
+.animate-card-out {
+  animation: card-vanish-out 0.4s cubic-bezier(0.23, 1, 0.32, 1) forwards;
 }

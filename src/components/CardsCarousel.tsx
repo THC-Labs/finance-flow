@@ -1,239 +1,221 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useFinanceData } from '../hooks/useFinanceData';
 import { VirtualCard } from './VirtualCard';
-import { Plus, X } from 'lucide-react';
+import { formatCurrency, formatDate } from '../utils/format';
 import { clsx } from 'clsx';
+import { ChevronRight, ArrowUpRight, ArrowDownLeft, Wallet } from 'lucide-react';
 
 export function CardsCarousel() {
-    const { data, addCard, isLoading } = useFinanceData();
-    const [isAdding, setIsAdding] = useState(false);
+    const { data, isLoading } = useFinanceData();
+    // activeCardId refers to the card currently "selected" and displayed on TOP of the left stack
     const [activeCardId, setActiveCardId] = useState<string | null>(null);
 
-    // Form State
-    const [name, setName] = useState('');
-    const [balance, setBalance] = useState('');
-    const [type, setType] = useState<'debit' | 'credit' | 'cash' | 'savings'>('debit');
-    const [color, setColor] = useState('bg-gradient-to-br from-zinc-800 to-zinc-950');
-
-    // Determine initial active card
     useEffect(() => {
         if (!isLoading && data.cards.length > 0 && !activeCardId) {
-            const lastTx = data.transactions[0];
-            if (lastTx && lastTx.card_id) {
-                const cardExists = data.cards.find(c => c.id === lastTx.card_id);
-                if (cardExists) {
-                    setActiveCardId(lastTx.card_id);
-                    return;
-                }
-            }
-            const lastCard = data.cards[data.cards.length - 1];
-            setActiveCardId(lastCard.id);
+            setActiveCardId(data.cards[0].id);
         }
-    }, [data.cards, data.transactions, isLoading, activeCardId]);
-
-    const handleAddCard = async (e: React.FormEvent) => {
-        e.preventDefault();
-        await addCard({
-            name,
-            balance: Number(balance),
-            type,
-            color,
-            last4: Math.floor(1000 + Math.random() * 9000).toString()
-        });
-        setIsAdding(false);
-        setName('');
-        setBalance('');
-        setType('debit');
-    };
-
-    const colors = [
-        { label: 'Obsidian', value: 'bg-gradient-to-br from-zinc-800 to-zinc-950' },
-        { label: 'Emerald', value: 'bg-gradient-to-br from-emerald-900 to-emerald-950' },
-        { label: 'Midnight', value: 'bg-gradient-to-br from-blue-900 to-blue-950' },
-        { label: 'Ruby', value: 'bg-gradient-to-br from-red-900 to-red-950' },
-        { label: 'Gold', value: 'bg-gradient-to-br from-yellow-700 to-yellow-900' },
-    ];
+    }, [data.cards, isLoading, activeCardId]);
 
     if (isLoading) {
-        return <div className="h-64 w-full bg-zinc-900/50 animate-pulse rounded-3xl"></div>;
+        return <div className="h-80 w-full bg-zinc-900/50 animate-pulse rounded-3xl"></div>;
     }
 
-    const activeCard = data.cards.find(c => c.id === activeCardId) || data.cards[0];
+    const totalBalance = data.cards.reduce((sum, c) => sum + Number(c.balance), 0);
+
+    // 1. STATE & TRANSITION LOGIC
+    const [isTransitioning, setIsTransitioning] = useState(false);
+    const [displayCardId, setDisplayCardId] = useState<string | null>(null);
+
+    // Initial load
+    useEffect(() => {
+        if (!isLoading && data.cards.length > 0 && !activeCardId) {
+            setActiveCardId(data.cards[0].id);
+            setDisplayCardId(data.cards[0].id);
+        }
+    }, [data.cards, isLoading, activeCardId]);
+
+    // Handle Card Selection Change with Animation
+    useEffect(() => {
+        if (activeCardId && activeCardId !== displayCardId) {
+            setIsTransitioning(true);
+            const timer = setTimeout(() => {
+                setDisplayCardId(activeCardId);
+                setIsTransitioning(false);
+            }, 300); // Wait for vanish-out
+            return () => clearTimeout(timer);
+        }
+    }, [activeCardId, displayCardId]);
+
+    // Derived Data based on displayCardId (the one currently animating or shown)
+    const activeCard = data.cards.find(c => c.id === (displayCardId || activeCardId)) || data.cards[0];
+    const stackedCards = data.cards.filter(c => c.id !== (displayCardId || activeCardId));
+
+    if (!activeCard) {
+        return (
+            <div className="w-full h-[450px] flex items-center justify-center text-zinc-500 animate-pulse">
+                Cargando tarjetas...
+            </div>
+        );
+    }
+
+    // Get last transaction for information display on card
+    const lastTransaction = data.transactions.find(t => t.card_id === activeCard.id);
+    const lastTransactionInfo = lastTransaction
+        ? `${lastTransaction.description.substring(0, 15)}${lastTransaction.description.length > 15 ? '...' : ''}  ${lastTransaction.type === 'income' ? '+' : ''}${formatCurrency(lastTransaction.amount)}`
+        : 'Sin movimientos';
+
+    // Helper for card colors
+    const getCardColor = (providedColor?: string) => {
+        if (providedColor && providedColor.trim() !== '') return providedColor;
+        return '#000000';
+    };
+
+    const activeCardColors = getCardColor(activeCard.color);
+
+    // 2. SCROLL NAVIGATION LOGIC
+    const lastScrollTime = useRef(0);
+    const containerRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const container = containerRef.current;
+        if (!container) return;
+
+        const handleWheel = (e: WheelEvent) => {
+            e.preventDefault();
+            e.stopPropagation();
+
+            const now = Date.now();
+            // Throttle slightly more than animation + transition delay
+            if (now - lastScrollTime.current < 700) return;
+
+            lastScrollTime.current = now;
+
+            const currentIndex = data.cards.findIndex(c => c.id === activeCardId);
+            if (currentIndex === -1) return;
+
+            if (e.deltaY > 0) {
+                const nextIndex = (currentIndex + 1) % data.cards.length;
+                setActiveCardId(data.cards[nextIndex].id);
+            } else {
+                const prevIndex = (currentIndex - 1 + data.cards.length) % data.cards.length;
+                setActiveCardId(data.cards[prevIndex].id);
+            }
+        };
+
+        container.addEventListener('wheel', handleWheel, { passive: false });
+        return () => container.removeEventListener('wheel', handleWheel);
+    }, [data.cards, activeCardId]);
+
 
     return (
-        /* Container increased height to accommodate vertical stack */
-        <div className="w-full h-[360px] flex items-center relative overflow-visible pl-2 md:pl-0">
-            {data.cards.length > 0 && activeCard && (
-                <div className="relative w-full h-full">
-                    {/* Render cards */}
-                    {data.cards.map((card, index) => {
-                        // Use activeCard.id to ensure fallback works even if activeCardId is null
-                        const isActive = card.id === activeCard.id;
+        // Layout: Left = Cards Stack / Right = Wallet Summary
+        // Align items-center to vertically center the stack relative to the wallet summary or vice versa
+        <div className="w-full max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 items-center px-4">
 
-                        // Calculate visual stacking relative to the derived active card
-                        const inactiveList = data.cards.filter(c => c.id !== activeCard.id);
-                        const stackIndex = inactiveList.findIndex(c => c.id === card.id);
+            {/* LEFT COLUMN: THE CARD STACK (Includes Active Card) */}
+            <div
+                ref={containerRef}
+                className="relative h-[340px] md:h-[380px] flex items-center justify-center perspective-1000"
+            >
 
-                        if (isActive) {
-                            return (
-                                <div
-                                    key={card.id}
-                                    className="absolute left-0 bottom-0 z-50 w-[360px] h-[225px] transition-all duration-500 ease-out"
-                                >
-                                    <VirtualCard
-                                        balance={Number(card.balance)}
-                                        holderName={data.userName}
-                                        cardName={card.name}
-                                        type={card.type}
-                                        color={card.color}
-                                        cardNumber={`**** **** **** ${card.last4 || '0000'}`}
-                                        isStacked={false}
-                                    />
-                                    {/* Glow */}
-                                    <div className={clsx(
-                                        "absolute -inset-4 rounded-[40px] opacity-40 blur-2xl -z-10",
-                                        card.color.replace('bg-', 'bg-').split(' ')[0]
-                                    )} style={{ background: card.color.includes('gradient') ? undefined : card.color }}></div>
-                                </div>
-                            )
-                        } else {
-                            if (stackIndex === -1) return null;
+                {/* 1. Stacked Cards (Behind Active) */}
+                {stackedCards.map((card, index) => {
+                    const cardColor = getCardColor(card.color);
+                    // Visual offset logic:
+                    // Stack them upwards/backwards behind the active card?
+                    // Or downwards?
+                    // Let's stack them BEHIND, slightly offset downwards to simulate a pile.
+                    // Scale down slightly.
 
-                            // Visual Position:
-                            // Stacked behind and above.
-                            return (
-                                <div
-                                    key={card.id}
-                                    onClick={() => setActiveCardId(card.id)}
-                                    className="absolute left-0 w-[360px] h-[225px] cursor-pointer transition-all duration-500 ease-[cubic-bezier(0.25,0.8,0.25,1)] hover:-translate-y-4 hover:brightness-110"
-                                    style={{
-                                        bottom: `${(stackIndex + 1) * 35}px`, // Move UP from bottom
-                                        zIndex: 40 - stackIndex,
-                                        transform: `scale(${1 - ((stackIndex + 1) * 0.05)})`, // Scale down slightly as they go back
-                                        transformOrigin: 'bottom center'
-                                    }}
-                                >
-                                    {/* Darken overlay for inactive */}
-                                    <div className="absolute inset-0 z-50 bg-black/40 hover:bg-black/10 transition-colors rounded-[24px]" />
+                    const offset = (index + 1) * 15; // 15px down for each card in stack
+                    const scale = 1 - ((index + 1) * 0.05); // slightly smaller
+                    const zIndex = 10 - index; // lower z-index
 
-                                    <VirtualCard
-                                        balance={Number(card.balance)}
-                                        holderName={data.userName}
-                                        cardName={card.name}
-                                        type={card.type}
-                                        color={card.color}
-                                        cardNumber={`**** **** **** ${card.last4 || '0000'}`}
-                                        isStacked={true}
-                                    />
-                                </div>
-                            );
-                        }
-                    })}
-
-                    {/* Add Button - Moved to the right of the active card */}
-                    <button
-                        onClick={() => setIsAdding(true)}
-                        className="absolute top-0 right-0 z-10 w-14 h-14 rounded-full bg-[#1A2326] border border-white/5 hover:border-[#9AD93D] hover:text-[#9AD93D] text-zinc-500 flex items-center justify-center transition-all shadow-xl hover:scale-110 group"
-                        title="Añadir Tarjeta"
-                    >
-                        <Plus size={28} className="group-hover:rotate-90 transition-transform" />
-                    </button>
-
-                </div>
-            )}
-
-            {/* Add Card Modal */}
-            {isAdding && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
-                    <div className="bg-zinc-900/80 backdrop-blur-xl border border-white/5 rounded-[40px] w-full max-w-md shadow-2xl p-8 relative animate-in zoom-in-95 duration-200">
-                        <button
-                            onClick={() => setIsAdding(false)}
-                            className="absolute top-6 right-6 text-zinc-500 hover:text-white transition-colors"
+                    return (
+                        <div
+                            key={card.id}
+                            className="absolute w-full max-w-[420px] aspect-[1.586] transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] cursor-pointer shadow-xl rounded-[32px] group"
+                            style={{
+                                zIndex: zIndex,
+                                left: '50%',
+                                top: '50%',
+                                transform: `translate(-50%, -50%) translateY(${offset}px) scale(${scale})`,
+                                opacity: 1, // FORCE OPAQUE
+                            }}
+                            onClick={() => setActiveCardId(card.id)}
                         >
-                            <X size={24} />
-                        </button>
-
-                        <h2 className="text-2xl font-bold text-white mb-2">Nueva Tarjeta</h2>
-                        <p className="text-zinc-400 text-sm mb-8">Añade una nueva fuente de fondos a tu cartera.</p>
-
-                        <form onSubmit={handleAddCard} className="space-y-5">
-                            <div className="space-y-2">
-                                <label className="text-xs font-medium text-zinc-500 uppercase tracking-wider">Nombre</label>
-                                <input
-                                    type="text"
-                                    value={name}
-                                    onChange={e => setName(e.target.value)}
-                                    placeholder="Ej. Cuenta Personal"
-                                    className="w-full bg-black/20 border border-white/5 rounded-2xl px-4 py-3.5 text-white focus:outline-none focus:border-[#9AD93D] focus:ring-1 focus:ring-[#9AD93D] transition-all placeholder:text-zinc-500"
-                                    required
-                                />
-                            </div>
-
-                            <div className="space-y-2">
-                                <label className="text-xs font-medium text-zinc-500 uppercase tracking-wider">Saldo Inicial</label>
-                                <div className="relative">
-                                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500">€</span>
-                                    <input
-                                        type="number"
-                                        value={balance}
-                                        onChange={e => setBalance(e.target.value)}
-                                        placeholder="0.00"
-                                        className="w-full bg-black/20 border border-white/5 rounded-2xl pl-8 pr-4 py-3.5 text-white focus:outline-none focus:border-[#9AD93D] focus:ring-1 focus:ring-[#9AD93D] transition-all placeholder:text-zinc-500"
-                                        required
-                                        min="0"
-                                        step="0.01"
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-5">
-                                <div className="space-y-2">
-                                    <label className="text-xs font-medium text-zinc-500 uppercase tracking-wider">Tipo</label>
-                                    <select
-                                        value={type}
-                                        onChange={e => setType(e.target.value as any)}
-                                        className="w-full bg-black/20 border border-white/5 rounded-2xl px-4 py-3.5 text-white focus:outline-none focus:border-[#9AD93D] transition-all appearance-none cursor-pointer"
-                                    >
-                                        <option value="debit">Débito</option>
-                                        <option value="credit">Crédito</option>
-                                        <option value="cash">Efectivo</option>
-                                        <option value="savings">Ahorros</option>
-                                    </select>
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-xs font-medium text-zinc-500 uppercase tracking-wider">Color</label>
-                                    <div className="flex gap-2">
-                                        {colors.map((c) => (
-                                            <button
-                                                key={c.value}
-                                                type="button"
-                                                onClick={() => setColor(c.value)}
-                                                className={clsx(
-                                                    "w-8 h-8 rounded-full border border-white/10 transition-transform hover:scale-110",
-                                                    color === c.value ? "ring-2 ring-white ring-offset-2 ring-offset-[#09090b] scale-110" : "opacity-60 hover:opacity-100"
-                                                )}
-                                                style={{ background: c.value.includes('gradient') ? undefined : c.value }}
-                                                title={c.label}
-                                            >
-                                                <div className={clsx("w-full h-full rounded-full", c.value)}></div>
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
-                            </div>
-
-                            <button
-                                type="submit"
-                                className="w-full bg-[#9AD93D] hover:bg-[#8ac336] text-black font-bold py-4 rounded-2xl transition-all transform active:scale-[0.98] mt-4 shadow-[0_0_20px_rgba(154,217,61,0.2)] hover:shadow-[0_0_30px_rgba(154,217,61,0.3)]"
+                            <div
+                                className="w-full h-full relative overflow-hidden rounded-[32px] border border-white/10 transition-colors duration-300"
+                                style={{ backgroundColor: cardColor, opacity: 1 }}
                             >
-                                Crear Tarjeta
-                            </button>
-                        </form>
+                                {/* Align with VirtualCard layers for consistent color appearance */}
+                                <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')]"></div>
+                                <div className="absolute inset-0 bg-gradient-to-br from-white/10 via-transparent to-black/20 group-hover:from-white/20 group-hover:to-black/10 transition-colors duration-300"></div>
+                            </div>
+                        </div>
+                    );
+                })}
+
+                {/* 2. Active Card - FRONT & CENTER */}
+                <div
+                    key={displayCardId}
+                    className={clsx(
+                        "relative w-full max-w-[420px] z-50 transition-transform duration-300",
+                        isTransitioning ? "animate-card-out" : "animate-card-in"
+                    )}
+                >
+                    <div className="aspect-[1.586] w-full relative shadow-2xl">
+                        <VirtualCard
+                            balance={Number(activeCard.balance)}
+                            holderName={data.userName}
+                            cardName={activeCard.name}
+                            type={activeCard.type}
+                            color={activeCardColors}
+                            cardNumber={`**** **** **** ${activeCard.last4 || '0000'}`}
+                            isStacked={false}
+                            lastTransactionInfo={lastTransactionInfo}
+                        />
+                    </div>
+                    {/* Shadow/Glow specific to active card */}
+                    <div
+                        className="absolute -inset-4 bg-gradient-to-br from-current to-transparent opacity-30 blur-2xl -z-10 rounded-full"
+                        style={{ color: activeCardColors }}
+                    ></div>
+                </div>
+
+            </div>
+
+
+            {/* RIGHT COLUMN: Wallet Summary (Empty of cards) */}
+            <div className="flex flex-col items-center justify-center animate-in fade-in slide-in-from-right-8 duration-700">
+
+                <div className="relative w-full max-w-[380px] group cursor-pointer hover:scale-[1.02] transition-transform duration-300">
+                    <div className="w-full h-[240px] bg-black rounded-[40px] p-8 flex flex-col justify-end relative overflow-hidden border border-zinc-800 shadow-[0_-10px_40px_rgba(0,0,0,0.5)]">
+                        {/* Lip */}
+                        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-40 h-10 bg-black rounded-b-[32px] z-30 border-b border-white/5 shadow-lg"></div>
+
+                        <div className="relative z-40 pointer-events-auto">
+                            <div className="flex items-center gap-2 mb-2">
+                                <Wallet className="w-4 h-4 text-[#9AD93D]" />
+                                <span className="text-zinc-500 text-sm font-medium">Billetera</span>
+                            </div>
+                            <h2 className="text-4xl font-bold text-white tracking-tight">{formatCurrency(totalBalance)}</h2>
+
+                            <div className="mt-4 flex items-center justify-between text-zinc-500 text-sm">
+                                <span className="flex items-center gap-2">
+                                    <span className="w-6 h-6 rounded-full bg-zinc-800 flex items-center justify-center text-xs text-white border border-white/10">{data.cards.length}</span>
+                                    Tarjetas vinculadas
+                                </span>
+                            </div>
+                        </div>
+                        {/* Shine */}
+                        <div className="absolute -top-20 -right-20 w-64 h-64 bg-white/5 rounded-full blur-3xl pointer-events-none"></div>
                     </div>
                 </div>
-            )}
+
+            </div>
         </div>
     );
 }
