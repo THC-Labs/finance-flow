@@ -2,7 +2,8 @@
 
 import { useFinanceData } from '../hooks/useFinanceData';
 import { formatCurrency, formatDate } from '../utils/format';
-import { CashFlowChart } from './CashFlowChart';
+import { SplineChart } from './SplineChart';
+import { CardsCarousel } from './CardsCarousel';
 import {
     ArrowUpRight,
     ArrowDownRight,
@@ -43,11 +44,6 @@ export function DashboardView() {
 
     const savings = Math.max(0, totalIncome - totalExpenses);
 
-    // Use currentAccountBalance if available, else derive from monthly (simplified for now)
-    // In the original app, currentAccountBalance was hardcoded or accumulated. 
-    // Here we use the context state.
-    const currentBalance = data.currentAccountBalance;
-
     const openModal = (type: TransactionType) => {
         setModalType(type);
         setIsModalOpen(true);
@@ -62,73 +58,64 @@ export function DashboardView() {
                     <h2 className="text-3xl font-bold text-white">
                         Buenos días, {' '}
                         {isLoading ? (
-                            <span className="inline-block h-8 w-32 bg-zinc-800 animate-pulse rounded-lg"></span>
+                            <span className="inline-block h-8 w-32 bg-white/10 animate-pulse rounded-lg"></span>
                         ) : (
-                            <span className="text-[#b4f827]">{data.userName}</span>
+                            <span className="text-[#9AD93D]">{data.userName}</span>
                         )}
                     </h2>
                     <p className="text-zinc-400 mt-1">Controla tus finanzas y alcanza tus objetivos</p>
-                </div>
-                <div className="relative w-full md:w-auto">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" size={18} />
-                    <input
-                        type="text"
-                        placeholder="Buscar transacción..."
-                        className="w-full md:w-64 pl-10 pr-4 py-2 bg-zinc-900 border border-zinc-800 rounded-full text-sm text-white focus:outline-none focus:border-[#b4f827] transition-colors"
-                    />
                 </div>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-                {/* Left Column */}
+                {/* Left Column (Main Content) */}
                 <div className="lg:col-span-2 space-y-6">
 
-                    {/* Wallet Card */}
-                    <div className="bg-zinc-900 rounded-3xl p-6 border border-zinc-800 relative overflow-hidden group hover:border-zinc-700 transition-all">
-                        <div className="absolute top-0 right-0 w-64 h-64 bg-[#b4f827]/5 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none"></div>
-
-                        <div className="flex justify-between items-start mb-8 relative z-10">
-                            <div>
-                                <h3 className="text-white font-semibold text-lg flex items-center gap-2">
-                                    <Wallet className="text-[#b4f827]" size={20} /> Mi Cartera
-                                </h3>
-                                <p className="text-zinc-500 text-sm">Ahorro fácil y eficiente</p>
-                            </div>
-                            <button
-                                onClick={() => openModal('income')}
-                                className="bg-[#b4f827] hover:bg-[#a3e622] text-black px-4 py-2 rounded-full font-medium text-sm flex items-center gap-2 transition-transform active:scale-95"
-                            >
-                                <span>Añadir</span>
-                                <Plus size={16} />
-                            </button>
-                        </div>
-
-                        <div className="mb-8 relative z-10">
-                            <span className="text-4xl md:text-5xl font-bold text-white tracking-tight block">
-                                {formatCurrency(data.currentAccountBalance)}
-                            </span>
-                            <span className="text-zinc-500 text-sm font-medium mt-1 block">Balance Total</span>
-                        </div>
-
-                        <div className="flex gap-3 relative z-10 overflow-x-auto pb-2 scrollbar-hide">
-                            {['Viajes', 'Hogar', 'Educación'].map((cat) => (
-                                <div key={cat} className="bg-zinc-950/50 border border-zinc-800/50 px-4 py-2 rounded-xl text-zinc-300 text-sm hover:bg-zinc-800 hover:text-white cursor-pointer transition-colors whitespace-nowrap">
-                                    {cat}
-                                </div>
-                            ))}
-                        </div>
+                    {/* Top Section: Card + Quick Actions */}
+                    <div className="flex flex-col gap-6">
+                        <CardsCarousel />
                     </div>
 
-                    {/* Summary Grid */}
+                    {/* Quick Actions - Moved below top section */}
+                    <div className="grid grid-cols-2 gap-6">
+                        <button
+                            onClick={() => openModal('income')}
+                            className="bg-zinc-900/50 backdrop-blur-xl border border-white/5 p-6 rounded-[24px] flex items-center justify-between group transition-all duration-300 hover:scale-[1.02] shadow-lg"
+                        >
+                            <div className="flex items-center gap-4">
+                                <div className="w-12 h-12 rounded-full bg-[#9AD93D]/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                    <ArrowUpRight className="text-[#9AD93D]" size={24} />
+                                </div>
+                                <span className="text-white font-bold text-lg">Ingreso</span>
+                            </div>
+                            <Plus className="text-zinc-500 group-hover:text-white transition-colors" size={20} />
+                        </button>
+
+                        <button
+                            onClick={() => openModal('expense')}
+                            className="bg-zinc-900/50 backdrop-blur-xl border border-white/5 p-6 rounded-[24px] flex items-center justify-between group transition-all duration-300 hover:scale-[1.02] shadow-lg"
+                        >
+                            <div className="flex items-center gap-4">
+                                <div className="w-12 h-12 rounded-full bg-red-500/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                    <ArrowDownRight className="text-red-400" size={24} />
+                                </div>
+                                <span className="text-white font-bold text-lg">Gasto</span>
+                            </div>
+                            <Minus className="text-zinc-500 group-hover:text-white transition-colors" size={20} />
+                        </button>
+                    </div>
+
+
+
+                    {/* Summary Grid (Now 2x2 with Goal) */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <SummaryCard
                             title="Ingresos"
                             amount={totalIncome}
                             icon={TrendingUp}
-                            color="text-purple-400"
-                            bgColor="bg-purple-400/10"
-                            trend="+12%"
+                            color="text-[#9AD93D]"
+                            bgColor="bg-[#9AD93D]/10"
                         />
                         <SummaryCard
                             title="Gastos"
@@ -136,75 +123,54 @@ export function DashboardView() {
                             icon={ArrowDownRight}
                             color="text-red-400"
                             bgColor="bg-red-400/10"
-                            trend="-5%"
                         />
                         <SummaryCard
                             title="Ahorros"
                             amount={savings}
                             icon={PiggyBank}
-                            color="text-blue-400"
-                            bgColor="bg-blue-400/10"
-                            trend="+8%"
+                            color="text-[#B3F2CF]"
+                            bgColor="bg-[#B3F2CF]/10"
                         />
-                    </div>
 
-                    {/* Chart Section */}
-                    <div className="bg-zinc-900 rounded-3xl p-6 border border-zinc-800">
-                        <div className="flex justify-between items-center mb-6">
-                            <h3 className="text-white font-semibold text-lg">Flujo de Efectivo</h3>
-                            <select className="bg-zinc-950 border border-zinc-800 text-zinc-300 text-sm rounded-lg px-3 py-1 focus:outline-none">
-                                <option>Mes Actual</option>
-                                <option>Anual</option>
-                            </select>
-                        </div>
-                        <div className="h-64 w-full">
-                            <CashFlowChart />
+                        {/* Monthly Goal moved here */}
+                        <div className="bg-zinc-900/50 backdrop-blur-xl rounded-[24px] p-5 border border-white/5 hover:scale-[1.02] transition-all duration-300 shadow-lg flex flex-col justify-between">
+                            <div className="flex justify-between items-center mb-2">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center">
+                                        <Wallet size={20} />
+                                    </div>
+                                    <div>
+                                        <p className="text-zinc-400 text-sm">Objetivo Mensual</p>
+                                        <p className="text-white font-bold text-lg">{formatCurrency(savings)}</p>
+                                    </div>
+                                </div>
+                                <span className="text-xs text-zinc-500">/ {formatCurrency(data.monthlyGoal)}</span>
+                            </div>
+                            <div className="w-full h-2 bg-zinc-800 rounded-full overflow-hidden mt-3">
+                                <div
+                                    className="h-full bg-blue-500 rounded-full transition-all duration-1000"
+                                    style={{ width: `${Math.min(100, (savings / data.monthlyGoal) * 100)}%` }}
+                                ></div>
+                            </div>
                         </div>
                     </div>
-
                 </div>
 
-                {/* Right Column */}
+                {/* Right Column (Sidebar) */}
                 <div className="space-y-6">
 
-                    {/* Quick Actions */}
-                    <div className="bg-zinc-900 rounded-3xl p-6 border border-zinc-800">
-                        <h3 className="text-white font-semibold text-lg mb-4">Acciones Rápidas</h3>
-                        <div className="grid grid-cols-2 gap-3">
-                            <button
-                                onClick={() => openModal('income')}
-                                className="bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 p-4 rounded-2xl flex flex-col items-center justify-center gap-2 group transition-all"
-                            >
-                                <div className="w-10 h-10 rounded-full bg-[#b4f827]/10 flex items-center justify-center group-hover:scale-110 transition-transform">
-                                    <ArrowUpRight className="text-[#b4f827]" size={20} />
-                                </div>
-                                <span className="text-zinc-300 font-medium text-sm">Ingreso</span>
-                            </button>
-                            <button
-                                onClick={() => openModal('expense')}
-                                className="bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 p-4 rounded-2xl flex flex-col items-center justify-center gap-2 group transition-all"
-                            >
-                                <div className="w-10 h-10 rounded-full bg-red-500/10 flex items-center justify-center group-hover:scale-110 transition-transform">
-                                    <ArrowDownRight className="text-red-400" size={20} />
-                                </div>
-                                <span className="text-zinc-300 font-medium text-sm">Gasto</span>
-                            </button>
-                        </div>
-                    </div>
-
                     {/* Recent Transactions */}
-                    <div className="bg-zinc-900 rounded-3xl p-6 border border-zinc-800 h-fit">
+                    <div className="bg-zinc-900/50 backdrop-blur-xl rounded-[32px] p-6 border border-white/5 shadow-2xl h-full">
                         <div className="flex justify-between items-center mb-6">
                             <h3 className="text-white font-semibold text-lg">Recientes</h3>
-                            <button className="text-[#b4f827] text-sm hover:underline">Ver todas</button>
+                            <button className="text-[#9AD93D] text-sm hover:underline">Ver todas</button>
                         </div>
 
                         <div className="space-y-4">
-                            {data.transactions.slice(-5).reverse().map((t) => (
-                                <div key={t.id} className="flex items-center justify-between group">
+                            {data.transactions.slice(-8).map((t) => ( // Showing more transactions since we have height
+                                <div key={t.id} className="flex items-center justify-between group p-3 hover:bg-white/5 rounded-2xl transition-all duration-300">
                                     <div className="flex items-center gap-3">
                                         <div className="w-10 h-10 rounded-full bg-zinc-800 flex items-center justify-center text-lg">
-                                            {/* Placeholder for category icon until we map it properly */}
                                             {getCategoryIcon(t.category)}
                                         </div>
                                         <div>
@@ -214,7 +180,7 @@ export function DashboardView() {
                                     </div>
                                     <span className={clsx(
                                         "font-medium text-sm",
-                                        t.type === 'income' ? 'text-[#b4f827]' : 'text-white'
+                                        t.type === 'income' ? 'text-[#9AD93D]' : 'text-white'
                                     )}>
                                         {t.type === 'income' ? '+' : '-'}{formatCurrency(t.amount)}
                                     </span>
@@ -226,26 +192,6 @@ export function DashboardView() {
                                     No hay transacciones recientes.
                                 </div>
                             )}
-                        </div>
-                    </div>
-
-                    {/* Monthly Goal */}
-                    <div className="bg-zinc-900 rounded-3xl p-6 border border-zinc-800">
-                        <div className="flex justify-between items-center mb-4">
-                            <h3 className="text-white font-semibold text-lg">Objetivo Mensual</h3>
-                            <span className="bg-blue-500/10 text-blue-400 text-xs px-2 py-1 rounded-full border border-blue-500/20">En progreso</span>
-                        </div>
-
-                        <div className="flex justify-between text-sm mb-2">
-                            <span className="text-zinc-400">Ahorro</span>
-                            <span className="text-white font-medium">{formatCurrency(savings)} <span className="text-zinc-500">/ {formatCurrency(data.monthlyGoal)}</span></span>
-                        </div>
-
-                        <div className="w-full h-2 bg-zinc-800 rounded-full overflow-hidden">
-                            <div
-                                className="h-full bg-blue-500 rounded-full transition-all duration-1000"
-                                style={{ width: `${Math.min(100, (savings / data.monthlyGoal) * 100)}%` }}
-                            ></div>
                         </div>
                     </div>
 
@@ -261,9 +207,9 @@ export function DashboardView() {
     );
 }
 
-function SummaryCard({ title, amount, icon: Icon, color, bgColor, trend }: any) {
+function SummaryCard({ title, amount, icon: Icon, color, bgColor }: any) {
     return (
-        <div className="bg-zinc-900 rounded-2xl p-5 border border-zinc-800 hover:border-zinc-700 transition-colors">
+        <div className="bg-zinc-900/50 backdrop-blur-xl rounded-[24px] p-5 border border-white/5 hover:scale-[1.02] transition-all duration-300 shadow-lg">
             <div className={clsx("w-10 h-10 rounded-xl flex items-center justify-center mb-4", bgColor, color)}>
                 <Icon size={20} />
             </div>

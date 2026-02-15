@@ -39,7 +39,7 @@ export function TransactionsView() {
                 </div>
             </div>
 
-            <div className="flex flex-col md:flex-row gap-4 bg-zinc-900 p-4 rounded-2xl border border-zinc-800">
+            <div className="flex flex-col md:flex-row gap-4 bg-zinc-900/70 backdrop-blur-md p-4 rounded-2xl border border-zinc-800">
                 <div className="relative flex-1">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" size={18} />
                     <input
@@ -75,7 +75,7 @@ export function TransactionsView() {
                 </div>
             </div>
 
-            <div className="bg-zinc-900 rounded-3xl border border-zinc-800 overflow-hidden">
+            <div className="bg-zinc-900/70 backdrop-blur-md rounded-3xl border border-zinc-800 overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="w-full text-left text-sm text-zinc-400">
                         <thead className="bg-zinc-950/50 text-xs uppercase font-medium">

@@ -44,7 +44,7 @@ export function CategoriesView() {
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {categories.map((group) => (
-                    <div key={group.title} className="bg-zinc-900 rounded-[30px] p-6 border border-zinc-800 flex flex-col gap-6 h-fit">
+                    <div key={group.title} className="bg-zinc-900/70 backdrop-blur-md rounded-[30px] p-6 border border-zinc-800 flex flex-col gap-6 h-fit">
                         <div className="flex items-center gap-3 border-b border-zinc-800/50 pb-4">
                             <div className={clsx("w-10 h-10 rounded-xl flex items-center justify-center", group.bgColor)}>
                                 <group.icon className={group.color} size={20} />
@@ -75,7 +75,7 @@ export function CategoriesView() {
             {/* Category Details Modal */}
             {selectedCategory && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-                    <div className="bg-zinc-900 border border-zinc-800 rounded-3xl w-full max-w-lg shadow-2xl p-6 relative animate-in zoom-in-95 duration-200">
+                    <div className="bg-zinc-900/70 backdrop-blur-md border border-zinc-800 rounded-3xl w-full max-w-lg shadow-2xl p-6 relative animate-in zoom-in-95 duration-200">
                         <button
                             onClick={() => setSelectedCategory(null)}
                             className="absolute top-4 right-4 text-zinc-400 hover:text-white transition-colors"

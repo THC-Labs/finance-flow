@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { FinanceData, Transaction, initialFinanceData } from '../types/finance';
+import { FinanceData, Transaction, initialFinanceData, Card } from '../types/finance';
 import { supabase } from '../utils/supabase';
 import { User } from '@supabase/supabase-js';
 
@@ -9,9 +9,12 @@ interface FinanceContextType {
     data: FinanceData;
     isLoading: boolean;
     user: User | null;
-    addTransaction: (transaction: Omit<Transaction, 'id'>) => Promise<void>;
+    addTransaction: (transaction: Omit<Transaction, 'id'>, cardId?: string) => Promise<void>;
     deleteTransaction: (id: string) => Promise<void>;
     editTransaction: (id: string, updatedTx: Partial<Omit<Transaction, 'id'>>) => Promise<void>;
+    addCard: (card: Omit<Card, 'id' | 'user_id'>) => Promise<void>;
+    deleteCard: (id: string) => Promise<void>;
+    updateCard: (id: string, updates: Partial<Omit<Card, 'id' | 'user_id'>>) => Promise<void>;
     updateSettings: (settings: Partial<FinanceData>) => Promise<void>;
     resetData: () => Promise<void>;
     signIn: (email: string, password: string) => Promise<any>;
@@ -79,7 +82,7 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
                     if (newProfile) {
                         setData(prev => ({
                             ...prev,
-                            userName: newProfile.user_name,
+                            userName: newProfile.user_name || 'Usuario',
                             monthlyGoal: newProfile.monthly_goal,
                             monthlyBudget: newProfile.monthly_budget,
                             currentAccountBalance: Number(newProfile.current_balance),
@@ -89,7 +92,7 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
                 } else if (profile) {
                     setData(prev => ({
                         ...prev,
-                        userName: profile.user_name,
+                        userName: profile.user_name || 'Usuario',
                         monthlyGoal: profile.monthly_goal,
                         monthlyBudget: profile.monthly_budget,
                         currentAccountBalance: Number(profile.current_balance),
@@ -98,13 +101,28 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
                 }
 
                 // Fetch Transactions
-                const { data: txs, error: txError } = await supabase
+                const { data: txs } = await supabase
                     .from('transactions')
                     .select('*')
                     .order('date', { ascending: false });
 
+                // Fetch Cards
+                const { data: cards } = await supabase
+                    .from('cards')
+                    .select('*')
+                    .order('created_at', { ascending: true });
+
                 if (txs) {
                     setData(prev => ({ ...prev, transactions: txs }));
+                }
+
+                if (cards) {
+                    const totalBalance = cards.reduce((sum, card) => sum + Number(card.balance), 0);
+                    setData(prev => ({
+                        ...prev,
+                        cards: cards,
+                        currentAccountBalance: totalBalance
+                    }));
                 }
             } catch (error) {
                 console.error("Error fetching data:", error);
@@ -116,12 +134,15 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
         fetchData();
     }, [user]);
 
-    const addTransaction = async (tx: Omit<Transaction, 'id'>) => {
+    const addTransaction = async (tx: Omit<Transaction, 'id'>, cardId?: string) => {
         if (!user) return;
+
+        // If no cardId provided, try to use the first card (default)
+        const targetCardId = cardId || (data.cards.length > 0 ? data.cards[0].id : null);
 
         const { data: newTx, error } = await supabase
             .from('transactions')
-            .insert({ ...tx, user_id: user.id })
+            .insert({ ...tx, user_id: user.id, card_id: targetCardId })
             .select()
             .single();
 
@@ -130,21 +151,122 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
             return;
         }
 
-        // Update local state and balance in DB (ideally via trigger, but doing it here for simplicity)
-        const newBalance = tx.type === 'income'
-            ? data.currentAccountBalance + tx.amount
-            : data.currentAccountBalance - tx.amount;
+        // Update Card Balance
+        if (targetCardId) {
+            const card = data.cards.find(c => c.id === targetCardId);
+            if (card) {
+                const newCardBalance = tx.type === 'income'
+                    ? Number(card.balance) + tx.amount
+                    : Number(card.balance) - tx.amount;
 
-        await supabase
-            .from('profiles')
-            .update({ current_balance: newBalance })
-            .eq('id', user.id);
+                await supabase
+                    .from('cards')
+                    .update({ balance: newCardBalance })
+                    .eq('id', targetCardId);
 
+                // Update local state
+                setData(prev => {
+                    const updatedCards = prev.cards.map(c =>
+                        c.id === targetCardId ? { ...c, balance: newCardBalance } : c
+                    );
+                    const totalBalance = updatedCards.reduce((sum, c) => sum + Number(c.balance), 0);
+
+                    return {
+                        ...prev,
+                        cards: updatedCards,
+                        currentAccountBalance: totalBalance,
+                        transactions: [newTx, ...prev.transactions]
+                    };
+                });
+                return;
+            }
+        }
+
+        // Fallback if no card (shouldn't happen with migration, but just in case)
         setData(prev => ({
             ...prev,
-            currentAccountBalance: newBalance,
             transactions: [newTx, ...prev.transactions]
         }));
+    };
+
+    const addCard = async (card: Omit<Card, 'id' | 'user_id'>) => {
+        if (!user) return;
+
+        const { data: newCard, error } = await supabase
+            .from('cards')
+            .insert({ ...card, user_id: user.id })
+            .select()
+            .single();
+
+        if (error) {
+            console.error("Error adding card (Raw):", JSON.stringify(error, null, 2));
+            console.error("Error object keys:", Object.keys(error));
+            console.error("Full Error:", error);
+            alert(`Error adding card: ${error.message}`); // Temporary feedback
+            return;
+        }
+
+        setData(prev => {
+            const updatedCards = [...prev.cards, newCard];
+            const totalBalance = updatedCards.reduce((sum, c) => sum + Number(c.balance), 0);
+            return {
+                ...prev,
+                cards: updatedCards,
+                currentAccountBalance: totalBalance
+            };
+        });
+    };
+
+    const deleteCard = async (id: string) => {
+        if (!user) return;
+
+        const { error } = await supabase
+            .from('cards')
+            .delete()
+            .eq('id', id);
+
+        if (error) {
+            console.error("Error deleting card:", error);
+            alert(`Error al eliminar la tarjeta: ${error.message}`);
+            return;
+        }
+
+        setData(prev => {
+            const updatedCards = prev.cards.filter(c => c.id !== id);
+            const totalBalance = updatedCards.reduce((sum, c) => sum + Number(c.balance), 0);
+            return {
+                ...prev,
+                cards: updatedCards,
+                currentAccountBalance: totalBalance
+            };
+        });
+    };
+
+    const updateCard = async (id: string, updates: Partial<Omit<Card, 'id' | 'user_id'>>) => {
+        if (!user) return;
+
+        const { error } = await supabase
+            .from('cards')
+            .update(updates)
+            .eq('id', id);
+
+        if (error) {
+            console.error("Error updating card:", error);
+            alert(`Error al actualizar la tarjeta: ${error.message}`);
+            return;
+        }
+
+        setData(prev => {
+            const updatedCards = prev.cards.map(c =>
+                c.id === id ? { ...c, ...updates } : c
+            );
+            const totalBalance = updatedCards.reduce((sum, c) => sum + Number(c.balance), 0);
+            return {
+                ...prev,
+                cards: updatedCards,
+                currentAccountBalance: totalBalance
+            };
+        });
     };
 
     const deleteTransaction = async (id: string) => {
@@ -163,18 +285,35 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
             return;
         }
 
-        const newBalance = txToDelete.type === 'income'
-            ? data.currentAccountBalance - txToDelete.amount
-            : data.currentAccountBalance + txToDelete.amount;
+        // Update Card Balance
+        if (txToDelete.card_id) {
+            const card = data.cards.find(c => c.id === txToDelete.card_id);
+            if (card) {
+                const newCardBalance = txToDelete.type === 'income'
+                    ? Number(card.balance) - txToDelete.amount
+                    : Number(card.balance) + txToDelete.amount;
 
-        await supabase
-            .from('profiles')
-            .update({ current_balance: newBalance })
-            .eq('id', user.id);
+                await supabase.from('cards').update({ balance: newCardBalance }).eq('id', txToDelete.card_id);
 
+                setData(prev => {
+                    const updatedCards = prev.cards.map(c =>
+                        c.id === txToDelete.card_id ? { ...c, balance: newCardBalance } : c
+                    );
+                    const totalBalance = updatedCards.reduce((sum, c) => sum + Number(c.balance), 0);
+                    return {
+                        ...prev,
+                        cards: updatedCards,
+                        currentAccountBalance: totalBalance,
+                        transactions: prev.transactions.filter(t => t.id !== id)
+                    }
+                });
+                return;
+            }
+        }
+
+        // Fallback
         setData(prev => ({
             ...prev,
-            currentAccountBalance: newBalance,
             transactions: prev.transactions.filter(t => t.id !== id)
         }));
     };
@@ -184,21 +323,6 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
 
         const originalTx = data.transactions.find(t => t.id === id);
         if (!originalTx) return;
-
-        // Calculate potential balance change
-        let balanceDiff = 0;
-
-        // If amount or type changed, we need to adjust balance
-        // Revert original transaction effect
-        const originalAmount = originalTx.type === 'income' ? originalTx.amount : -originalTx.amount;
-
-        // Apply new transaction effect (use new values or fallback to original)
-        const newType = updatedTx.type || originalTx.type;
-        const newAmountVal = updatedTx.amount !== undefined ? updatedTx.amount : originalTx.amount;
-        const newSignedAmount = newType === 'income' ? newAmountVal : -newAmountVal;
-
-        balanceDiff = newSignedAmount - originalAmount;
-        const newBalance = data.currentAccountBalance + balanceDiff;
 
         const { error } = await supabase
             .from('transactions')
@@ -210,16 +334,47 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
             return;
         }
 
-        if (balanceDiff !== 0) {
-            await supabase
-                .from('profiles')
-                .update({ current_balance: newBalance })
-                .eq('id', user.id);
+        // Check if balance update is needed
+        // Assuming card_id didn't change for MVP simplicity. If it did, we'd need to update 2 cards.
+        // Let's assume simplest case: same card, amount/type change.
+        const cardId = originalTx.card_id;
+
+        if (cardId) {
+            const card = data.cards.find(c => c.id === cardId);
+            if (card) {
+                const originalAmountSigned = originalTx.type === 'income' ? originalTx.amount : -originalTx.amount;
+
+                const newType = updatedTx.type || originalTx.type;
+                const newAmountVal = updatedTx.amount !== undefined ? updatedTx.amount : originalTx.amount;
+                const newAmountSigned = newType === 'income' ? newAmountVal : -newAmountVal;
+
+                const diff = newAmountSigned - originalAmountSigned;
+
+                if (diff !== 0) {
+                    const newCardBalance = Number(card.balance) + diff;
+                    await supabase.from('cards').update({ balance: newCardBalance }).eq('id', cardId);
+
+                    setData(prev => {
+                        const updatedCards = prev.cards.map(c =>
+                            c.id === cardId ? { ...c, balance: newCardBalance } : c
+                        );
+                        const totalBalance = updatedCards.reduce((sum, c) => sum + Number(c.balance), 0);
+                        return {
+                            ...prev,
+                            cards: updatedCards,
+                            currentAccountBalance: totalBalance,
+                            transactions: prev.transactions.map(t =>
+                                t.id === id ? { ...t, ...updatedTx } : t
+                            )
+                        }
+                    });
+                    return;
+                }
+            }
         }
 
         setData(prev => ({
             ...prev,
-            currentAccountBalance: newBalance,
             transactions: prev.transactions.map(t =>
                 t.id === id ? { ...t, ...updatedTx } : t
             )
@@ -283,6 +438,9 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
             addTransaction,
             deleteTransaction,
             editTransaction,
+            addCard,
+            deleteCard,
+            updateCard,
             updateSettings,
             resetData,
             signIn,
