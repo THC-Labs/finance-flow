@@ -22,7 +22,10 @@ export function CardsCarousel() {
         return <div className="h-80 w-full bg-zinc-900/50 animate-pulse rounded-3xl"></div>;
     }
 
-    const totalBalance = data.cards.reduce((sum, c) => sum + Number(c.balance), 0);
+    const totalAllBalance = data.cards.reduce((sum, c) => sum + Number(c.balance), 0);
+    const totalDebitBalance = data.cards
+        .filter(c => c.type === 'debit')
+        .reduce((sum, c) => sum + Number(c.balance), 0);
 
     // 1. STATE & TRANSITION LOGIC
     const [isTransitioning, setIsTransitioning] = useState(false);
@@ -196,17 +199,22 @@ export function CardsCarousel() {
                         {/* Lip */}
                         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-40 h-10 bg-black rounded-b-[32px] z-30 border-b border-white/5 shadow-lg"></div>
 
+                        {/* Card count bubble - top right */}
+                        <div className="absolute top-6 right-6 z-40">
+                            <span className="w-8 h-8 rounded-full bg-zinc-900 flex items-center justify-center text-xs text-white border border-white/10 font-bold shadow-lg">{data.cards.length}</span>
+                        </div>
+
                         <div className="relative z-40 pointer-events-auto">
                             <div className="flex items-center gap-2 mb-2">
                                 <Wallet className="w-4 h-4 text-[#9AD93D]" />
                                 <span className="text-zinc-500 text-sm font-medium">Billetera</span>
                             </div>
-                            <h2 className="text-4xl font-bold text-white tracking-tight">{formatCurrency(totalBalance)}</h2>
+                            <h2 className="text-4xl font-bold text-white tracking-tight">{formatCurrency(totalDebitBalance)}</h2>
 
-                            <div className="mt-4 flex items-center justify-between text-zinc-500 text-sm">
+                            <div className="mt-4 flex items-center justify-between text-zinc-500 text-sm border-t border-white/5 pt-4">
                                 <span className="flex items-center gap-2">
-                                    <span className="w-6 h-6 rounded-full bg-zinc-800 flex items-center justify-center text-xs text-white border border-white/10">{data.cards.length}</span>
-                                    Tarjetas vinculadas
+                                    <span className="text-zinc-400">Total dinero:</span>
+                                    <span className="text-white font-semibold">{formatCurrency(totalAllBalance)}</span>
                                 </span>
                             </div>
                         </div>

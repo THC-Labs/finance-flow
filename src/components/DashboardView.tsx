@@ -24,7 +24,7 @@ export function DashboardView() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [modalType, setModalType] = useState<TransactionType>('expense');
 
-    // Calculate totals
+    // Calculate totals based on user definition
     const today = new Date();
     const currentMonth = today.getMonth();
     const currentYear = today.getFullYear();
@@ -34,15 +34,26 @@ export function DashboardView() {
         return date.getMonth() === currentMonth && date.getFullYear() === currentYear;
     });
 
+    // 1. Ahorro: Sumatorio de todas las tarjetas definidas como "savings"
+    const savingsCards = data.cards.filter(c => c.type === 'savings');
+    const savingsCardIds = savingsCards.map(c => c.id);
+    const totalSavingsBalance = savingsCards.reduce((sum, c) => sum + Number(c.balance), 0);
+
+    // 2. Objetivo mensual: sumatorio (ingresos - gastos) de las tarjetas de ahorro
+    const savingsMonthlyTransactions = monthlyTransactions.filter(t => t.card_id && savingsCardIds.includes(t.card_id));
+    const monthlySavingsFlow = savingsMonthlyTransactions.reduce((sum, t) =>
+        t.type === 'income' ? sum + t.amount : sum - t.amount, 0
+    );
+
+    // 3. Ingresos: sumatorio de ingresos de todas las tarjetas (exceptuando ahorro)
     const totalIncome = monthlyTransactions
-        .filter(t => t.type === 'income')
+        .filter(t => t.type === 'income' && (!t.card_id || !savingsCardIds.includes(t.card_id)))
         .reduce((sum, t) => sum + t.amount, 0);
 
+    // 4. Gastos: sumatorio de todas las tarjetas (gastos)
     const totalExpenses = monthlyTransactions
         .filter(t => t.type === 'expense')
         .reduce((sum, t) => sum + t.amount, 0);
-
-    const savings = Math.max(0, totalIncome - totalExpenses);
 
     const openModal = (type: TransactionType) => {
         setModalType(type);
@@ -126,7 +137,7 @@ export function DashboardView() {
                         />
                         <SummaryCard
                             title="Ahorros"
-                            amount={savings}
+                            amount={totalSavingsBalance}
                             icon={PiggyBank}
                             color="text-[#B3F2CF]"
                             bgColor="bg-[#B3F2CF]/10"
@@ -141,7 +152,7 @@ export function DashboardView() {
                                     </div>
                                     <div>
                                         <p className="text-zinc-400 text-sm">Objetivo Mensual</p>
-                                        <p className="text-white font-bold text-lg">{formatCurrency(savings)}</p>
+                                        <p className="text-white font-bold text-lg">{formatCurrency(monthlySavingsFlow)}</p>
                                     </div>
                                 </div>
                                 <span className="text-xs text-zinc-500">/ {formatCurrency(data.monthlyGoal)}</span>
@@ -149,7 +160,7 @@ export function DashboardView() {
                             <div className="w-full h-2 bg-zinc-800 rounded-full overflow-hidden mt-3">
                                 <div
                                     className="h-full bg-blue-500 rounded-full transition-all duration-1000"
-                                    style={{ width: `${Math.min(100, (savings / data.monthlyGoal) * 100)}%` }}
+                                    style={{ width: `${Math.min(100, (monthlySavingsFlow / data.monthlyGoal) * 100)}%` }}
                                 ></div>
                             </div>
                         </div>
