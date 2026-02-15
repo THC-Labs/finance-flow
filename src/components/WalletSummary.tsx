@@ -5,8 +5,12 @@ import { clsx } from 'clsx';
 export function WalletSummary() {
     const { data } = useFinanceData();
 
-    // Calculate total balance across all cards
-    const totalBalance = data.cards.reduce((sum, card) => sum + Number(card.balance), 0);
+    // Calculate total balance across only debit cards
+    // Calculate total balance across only debit cards
+    const totalAllBalance = data.cards.reduce((sum, c) => sum + Number(c.balance), 0);
+    const totalDebitBalance = data.cards
+        .filter(card => card.type === 'debit')
+        .reduce((sum, card) => sum + Number(card.balance), 0);
 
     return (
         <div className="relative w-full h-[320px] flex items-center justify-center">
@@ -44,7 +48,10 @@ export function WalletSummary() {
                             <div className="w-2 h-2 rounded-full bg-zinc-500"></div>
                             <span className="text-zinc-500 text-sm font-medium">Total Balance</span>
                         </div>
-                        <h2 className="text-4xl font-bold text-white tracking-tight">{formatCurrency(totalBalance)}</h2>
+                        <h2 className="text-4xl font-bold text-white tracking-tight">{formatCurrency(totalDebitBalance)}</h2>
+                        <div className="mt-2 text-zinc-500 text-sm">
+                            Total dinero: <span className="text-white">{formatCurrency(totalAllBalance)}</span>
+                        </div>
                     </div>
 
                     {/* Decorative shine */}
